@@ -42,7 +42,7 @@ You'll need to install [sbt](https://www.scala-sbt.org/).
 
 - The coordinator expects a worker JAR to be present in a certain location in the project. Run `sbt "worker/assembly"`
   to build the worker JAR.
-- The worker expects kafka to be running on `localhost:9085` with plaintext auth.
+- The worker expects kafka to be running on `localhost:9092` with plaintext auth.
 - Run `sbt "coordinator / run 1 2 3"` to run the program "1 2 3" in the coordinator. This particular program reproduces
   the said bug. If no arguments are passed to the coordinator, it runs a random program.
 - The coordinator will output the following

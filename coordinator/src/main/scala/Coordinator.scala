@@ -16,7 +16,7 @@ object Coordinator extends scala.App {
   println(s"appid: $appId")
 
   val props = new Properties
-  props.putIfAbsent(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9085")
+  props.putIfAbsent(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
 
   val adminClient = AdminClient.create(props)
   val producer = new KafkaProducer(
@@ -45,7 +45,7 @@ object Coordinator extends scala.App {
     }
   })
 
-  Thread.sleep(2000)
+  Thread.sleep(5000)
 
   val t = new Thread(() =>
     if (args.length > 0) {
@@ -61,22 +61,19 @@ object Coordinator extends scala.App {
   t.setDaemon(true)
   t.start()
 
-//  //    runProgram(Seq(6, 7, 7, 0, 4, 6)
-//
-//  val t = new Thread(() =>
-////    runProgram(Seq(6, 7, 7, 0, 4, 6))
-////    runProgram(Seq(7, 6, 2))
-////    runProgram(LazyList.from(Iterator.continually(scala.util.Random.nextInt(10))))
-//  )
-
-  (1 to 1000000).foreach { i =>
-    1 to 100 foreach { x =>
-      producer.send(
-        new ProducerRecord[String, Integer](s"$appId-input-topic", s"$x", i)
-      )
-      Thread.sleep(5)
+  (1 to 100).foreach { j =>
+    (1 to 5000000).foreach { i =>
+      (1 to 5000000).foreach { x =>
+        producer.send(
+            new ProducerRecord[String, Integer](s"$appId-input-topic", s"$x", i)
+        )
+      }
+      Thread.sleep(1)
     }
   }
+
+
+  println(s"done instance")
 
   def runProgram(p: Seq[Int]): Unit = {
     p.zipWithIndex.foreach { case (i, pos) =>
