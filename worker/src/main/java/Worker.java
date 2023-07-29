@@ -62,7 +62,7 @@ public final class Worker {
                 final Integer storeValue = this.kvStore.get(entry.key);
 
                 if (entry.value != storeValue) {
-                    System.err.println("[" + instanceId + "]" + "!!! BROKEN !!! Expected " + storeValue + " but found " + entry.value + " partition: " + context.recordMetadata().map(RecordMetadata::partition).orElseGet(() -> -1));
+                    System.err.println("[" + instanceId + "]" + "!!! BROKEN !!! Expected in stored value: " + storeValue + " but KeyValueIterator value: " + entry.value + " partition: " + context.recordMetadata().map(RecordMetadata::partition).orElseGet(() -> -1));
                     throw new RuntimeException("Broken!");
                 }
 
