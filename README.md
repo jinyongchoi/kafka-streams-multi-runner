@@ -1,3 +1,4 @@
+# forked from balajirrao/kafka-streams-multi-runner and fixed for bug reproduction
 # kafka-streams-multi-runner
 
 This main purpose of this project is to reproduce
@@ -47,12 +48,11 @@ You'll need to install [sbt](https://www.scala-sbt.org/).
   the said bug. If no arguments are passed to the coordinator, it runs a random program.
 - The coordinator will output the following
   ```
-      appid: 5e23aef6-b9f1-43a1-ba3e-ce7feedd99e6
+      appid: 437163b7-6f91-4aa2-bdf1-c7ba7e5a40ca
       [0] starting instance +1
-      [1] starting instance +2
-      [2] starting instance +3
-      [0]!!! BROKEN !!! Expected 58 but found 31 partition: 3
-      [1]!!! BROKEN !!! Expected 64 but found 58 partition: 1
+      forwardAll Start
+      [0]!!! BROKEN !!! Key: 859930 Expected in stored(Cache or Store) value: 2 but KeyValueIterator value: 1
+
   ```
 
 The number in square brackets is the "program-counter". You can find worker logs for this instance

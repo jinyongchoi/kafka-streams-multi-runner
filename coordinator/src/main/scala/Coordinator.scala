@@ -34,18 +34,18 @@ object Coordinator extends scala.App {
 
   val processes = new ConcurrentHashMap[Int, SubProcess]()
 
-  Runtime.getRuntime.addShutdownHook({
-//      EmbeddedKafka.stop()
-    new Thread("streams-wordcount-shutdown-hook") {
-      override def run(): Unit = {
-        processes.asScala.iterator.foreach { p =>
-          p._2.destroy()
-        }
-      }
-    }
-  })
+//   Runtime.getRuntime.addShutdownHook({
+// //      EmbeddedKafka.stop()
+//     new Thread("streams-wordcount-shutdown-hook") {
+//       override def run(): Unit = {
+//         processes.asScala.iterator.foreach { p =>
+//           p._2.destroy()
+//         }
+//       }
+//     }
+//   })
 
-  Thread.sleep(5000)
+//   Thread.sleep(5000)
 
   val t = new Thread(() =>
     if (args.length > 0) {
@@ -61,21 +61,20 @@ object Coordinator extends scala.App {
   t.setDaemon(true)
   t.start()
 
-  (1 to 100).foreach { j =>
-    (1 to 5000000).foreach { i =>
-      (1 to 5000000).foreach { x =>
-        producer.send(
-            new ProducerRecord[String, Integer](s"$appId-input-topic", s"$x", i)
-        )
-      }
-      Thread.sleep(1)
+  (1 to 5000000).foreach { i =>
+    (1 to 5000000).foreach { x =>
+      producer.send(
+          new ProducerRecord[String, Integer](s"$appId-input-topic", s"$x", i)
+      )
     }
+    Thread.sleep(1)
   }
 
 
   println(s"done instance")
 
   def runProgram(p: Seq[Int]): Unit = {
+    Thread.sleep(5000)
     p.zipWithIndex.foreach { case (i, pos) =>
       if (processes.containsKey(i)) {
         println(s"[$pos] stopping instance $i")

@@ -10,4 +10,7 @@
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
+    <logger name="org.apache.kafka.streams.processor.internals" level="info"/>
+    <logger name="org.apache.kafka.streams.state.internals" level="info"/>
+    
 </configuration>

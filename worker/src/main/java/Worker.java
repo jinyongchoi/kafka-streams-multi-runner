@@ -15,6 +15,8 @@ import org.apache.kafka.streams.processor.api.RecordMetadata;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
+import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
+import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse;
 import os.temp;
 
 import java.io.FileInputStream;
@@ -55,6 +57,8 @@ public final class Worker {
         }
 
         private void forwardAll(final long timestamp) {
+            System.err.println("forwardAll Start");
+
             KeyValueIterator<String, Integer> kvList = this.kvStore.all();
             while (kvList.hasNext()) {
                 KeyValue<String, Integer> entry = kvList.next();
@@ -62,13 +66,13 @@ public final class Worker {
                 final Integer storeValue = this.kvStore.get(entry.key);
 
                 if (entry.value != storeValue) {
-                    System.err.println("[" + instanceId + "]" + "!!! BROKEN !!! Expected in stored value: " + storeValue + " but KeyValueIterator value: " + entry.value + " partition: " + context.recordMetadata().map(RecordMetadata::partition).orElseGet(() -> -1));
+                    System.err.println("[" + instanceId + "]" + "!!! BROKEN !!! Key: " + entry.key + " Expected in stored(Cache or Store) value: " + storeValue + " but KeyValueIterator value: " + entry.value);
                     throw new RuntimeException("Broken!");
                 }
 
                 this.context.forward(msg);
-                this.kvStore.delete(entry.key);
             }
+            kvList.close();
         }
 
         @Override
@@ -103,7 +107,6 @@ public final class Worker {
         props.putIfAbsent(StreamsConfig.METRICS_RECORDING_LEVEL_CONFIG, "TRACE");
         props.putIfAbsent(StreamsConfig.BUFFERED_RECORDS_PER_PARTITION_CONFIG, 30000);
         props.putIfAbsent(StreamsConfig.POLL_MS_CONFIG, 1000);
-        props.putIfAbsent(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
         props.putIfAbsent(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.putIfAbsent(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Integer().getClass());
         props.putIfAbsent(StreamsConfig.RECEIVE_BUFFER_CONFIG, 4194304);
@@ -127,8 +130,6 @@ public final class Worker {
         props.putIfAbsent(StreamsConfig.producerPrefix(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG), 600000);
         props.putIfAbsent(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.putIfAbsent(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler.class.getName());
-
-        props.putIfAbsent(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         final Topology builder = new Topology();
 
@@ -156,16 +157,21 @@ public final class Worker {
         final KafkaStreams streams = new KafkaStreams(builder, props);
         final CountDownLatch latch = new CountDownLatch(1);
 
+        streams.setUncaughtExceptionHandler(ex -> {
+            System.err.println("ERROR DYING");
+            return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_CLIENT;
+        });
         // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-wordcount-shutdown-hook") {
             @Override
             public void run() {
-                streams.close(new KafkaStreams.CloseOptions().leaveGroup(true));
+                streams.close(Duration.ofSeconds(10));
                 System.err.println("Streams closed");
                 latch.countDown();
             }
         });
         try {
+            streams.cleanUp();
             streams.start();
             latch.await();
         } catch (final Throwable e) {
