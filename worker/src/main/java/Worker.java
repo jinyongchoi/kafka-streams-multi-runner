@@ -67,12 +67,14 @@ public final class Worker {
 
                 if (entry.value != storeValue) {
                     System.err.println("[" + instanceId + "]" + "!!! BROKEN !!! Key: " + entry.key + " Expected in stored(Cache or Store) value: " + storeValue + " but KeyValueIterator value: " + entry.value);
+                    System.out.println("[" + instanceId + "]" + "!!! BROKEN !!! Key: " + entry.key + " Expected in stored(Cache or Store) value: " + storeValue + " but KeyValueIterator value: " + entry.value);
                     throw new RuntimeException("Broken!");
                 }
 
                 this.context.forward(msg);
             }
             kvList.close();
+            System.err.println("forwardAll end");
         }
 
         @Override
