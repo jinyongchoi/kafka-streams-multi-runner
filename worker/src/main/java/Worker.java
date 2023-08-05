@@ -58,6 +58,7 @@ public final class Worker {
 
         private void forwardAll(final long timestamp) {
             System.err.println("forwardAll Start");
+            System.out.println("forwardAll Start");
 
             KeyValueIterator<String, Integer> kvList = this.kvStore.all();
             while (kvList.hasNext()) {
@@ -72,9 +73,12 @@ public final class Worker {
                 }
 
                 this.context.forward(msg);
+                // evict() call in delete.
+                this.kvStore.delete(entry.key);
             }
             kvList.close();
             System.err.println("forwardAll end");
+            System.out.println("forwardAll end");
         }
 
         @Override
