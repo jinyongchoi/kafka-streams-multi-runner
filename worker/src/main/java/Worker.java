@@ -73,8 +73,11 @@ public final class Worker {
                 }
 
                 this.context.forward(msg);
-                // evict() call in delete.
+
+                System.out.println("delete key start: " + entry.key);
+                // delete() method call the maybeEvict() function.
                 this.kvStore.delete(entry.key);
+                System.out.println("delete key end : " + entry.key);
             }
             kvList.close();
             System.err.println("forwardAll end");
